@@ -6,7 +6,7 @@
 </a>
 
 
-# Node Version Manager [![Build Status](https://app.travis-ci.com/nvm-sh/nvm.svg?branch=master)][3] [![nvm version](https://img.shields.io/badge/version-v0.40.3-yellow.svg)][4] [![CII Best Practices](https://bestpractices.dev/projects/684/badge)](https://bestpractices.dev/projects/684)
+# Node Version Manager (ERIFY(TM) Fork) [![CI Status](https://github.com/erify-world/erify-nvm/actions/workflows/ci-nvm.yml/badge.svg)][ci-badge] [![Upstream Sync](https://github.com/erify-world/erify-nvm/actions/workflows/sync-upstream.yml/badge.svg)][sync-badge] [![Build Status](https://app.travis-ci.com/nvm-sh/nvm.svg?branch=master)][3] [![nvm version](https://img.shields.io/badge/version-v0.40.3-yellow.svg)][4] [![CII Best Practices](https://bestpractices.dev/projects/684/badge)](https://bestpractices.dev/projects/684)
 
 <!-- To update this table of contents, ensure you have run `npm install` then `npm run doctoc` -->
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -1037,6 +1037,8 @@ To change the user directory and/or account name follow the instructions [here](
 [2]: https://github.com/nvm-sh/nvm/blob/v0.40.3/install.sh
 [3]: https://app.travis-ci.com/nvm-sh/nvm
 [4]: https://github.com/nvm-sh/nvm/releases/tag/v0.40.3
+[ci-badge]: https://github.com/erify-world/erify-nvm/actions/workflows/ci-nvm.yml
+[sync-badge]: https://github.com/erify-world/erify-nvm/actions/workflows/sync-upstream.yml
 [Urchin]: https://git.sdf.org/tlevine/urchin
 [Fish]: https://fishshell.com
 

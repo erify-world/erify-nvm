@@ -1,0 +1,320 @@
+name: 'Sync: Upstream nvm-sh/nvm'
+
+on:
+  schedule:
+    # Run every Monday at 03:00 UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force sync even if no changes'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-upstream:
+    name: 'Sync with nvm-sh/nvm'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          disable-sudo: true
+          egress-policy: audit
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+      
+      - name: Checkout ERIFY(TM) nvm
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "ERIFY(TM) Bot"
+          git config user.email "bot@erify.world"
+      
+      - name: Detect default branch
+        id: default-branch
+        run: |
+          # Get the default branch name
+          DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          if [ -z "$DEFAULT_BRANCH" ]; then
+            # Fallback: try to detect from remote
+            DEFAULT_BRANCH=$(git ls-remote --symref origin HEAD | grep '^ref:' | sed 's@^ref: refs/heads/@@')
+          fi
+          if [ -z "$DEFAULT_BRANCH" ]; then
+            # Final fallback
+            DEFAULT_BRANCH="master"
+          fi
+          echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+          echo "TARGET: Detected default branch: $DEFAULT_BRANCH"
+      
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/nvm-sh/nvm.git || true
+          git remote -v
+      
+      - name: Fetch upstream changes
+        run: |
+          echo "SYNC: Fetching upstream changes..."
+          git fetch upstream
+          git fetch origin
+      
+      - name: Check for upstream changes
+        id: check-changes
+        run: |
+          DEFAULT_BRANCH="${{ steps.default-branch.outputs.default_branch }}"
+          
+          # Get the latest commit from upstream master
+          UPSTREAM_COMMIT=$(git rev-parse upstream/master)
+          
+          # Get the latest commit from our default branch  
+          LOCAL_COMMIT=$(git rev-parse origin/$DEFAULT_BRANCH)
+          
+          echo "upstream_commit=$UPSTREAM_COMMIT" >> $GITHUB_OUTPUT
+          echo "local_commit=$LOCAL_COMMIT" >> $GITHUB_OUTPUT
+          
+          if [ "$UPSTREAM_COMMIT" = "$LOCAL_COMMIT" ]; then
+            echo "changes_available=false" >> $GITHUB_OUTPUT
+            echo "INFO: No upstream changes detected"
+          else
+            echo "changes_available=true" >> $GITHUB_OUTPUT
+            echo "INFO: Upstream changes detected!"
+            echo "  Local:    $LOCAL_COMMIT"
+            echo "  Upstream: $UPSTREAM_COMMIT"
+          fi
+      
+      - name: Create sync branch
+        if: steps.check-changes.outputs.changes_available == 'true' || github.event.inputs.force == 'true'
+        id: sync-branch
+        run: |
+          DEFAULT_BRANCH="${{ steps.default-branch.outputs.default_branch }}"
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BRANCH_NAME="sync/upstream-$TIMESTAMP"
+          
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "BRANCH: Creating sync branch: $BRANCH_NAME"
+          
+          # Checkout default branch and create new sync branch
+          git checkout $DEFAULT_BRANCH
+          git checkout -b $BRANCH_NAME
+      
+      - name: Merge upstream changes
+        if: steps.check-changes.outputs.changes_available == 'true' || github.event.inputs.force == 'true'
+        id: merge
+        run: |
+          DEFAULT_BRANCH="${{ steps.default-branch.outputs.default_branch }}"
+          
+          echo "MERGE: Attempting to merge upstream changes..."
+          
+          # Try to merge upstream/master
+          if git merge upstream/master --no-edit -m "SYNC: Sync with upstream nvm-sh/nvm
+          
+          Merging latest changes from upstream nvm-sh/nvm repository.
+          
+          - Upstream commit: ${{ steps.check-changes.outputs.upstream_commit }}
+          - Previous commit: ${{ steps.check-changes.outputs.local_commit }}
+          
+          This automated sync ensures ERIFY(TM) nvm stays up-to-date with the latest
+          features, bug fixes, and security improvements from the upstream project.
+          
+          Source: https://github.com/nvm-sh/nvm"; then
+            echo "merge_success=true" >> $GITHUB_OUTPUT
+            echo "SUCCESS: Merge successful!"
+            
+            # Show summary of changes
+            echo "SUMMARY: Changes summary:"
+            git log --oneline ${{ steps.check-changes.outputs.local_commit }}..${{ steps.check-changes.outputs.upstream_commit }}
+          else
+            echo "merge_success=false" >> $GITHUB_OUTPUT
+            echo "ERROR: Merge failed - conflicts detected"
+            
+            # Show conflicted files
+            echo "WARNING: Conflicted files:"
+            git status --porcelain | grep "^UU\|^AA\|^DD" || echo "No conflicted files found"
+            
+            # Reset the merge
+            git merge --abort
+          fi
+      
+      - name: Push sync branch
+        if: (steps.check-changes.outputs.changes_available == 'true' || github.event.inputs.force == 'true') && steps.merge.outputs.merge_success == 'true'
+        run: |
+          BRANCH_NAME="${{ steps.sync-branch.outputs.branch_name }}"
+          echo "PUSH: Pushing sync branch: $BRANCH_NAME"
+          git push origin $BRANCH_NAME
+      
+      - name: Create Pull Request
+        if: (steps.check-changes.outputs.changes_available == 'true' || github.event.inputs.force == 'true') && steps.merge.outputs.merge_success == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DEFAULT_BRANCH="${{ steps.default-branch.outputs.default_branch }}"
+          BRANCH_NAME="${{ steps.sync-branch.outputs.branch_name }}"
+          
+          # Get commit count and first/last commit info for PR description
+          COMMIT_COUNT=$(git rev-list --count ${{ steps.check-changes.outputs.local_commit }}..${{ steps.check-changes.outputs.upstream_commit }})
+          FIRST_COMMIT=$(git log --format="%h %s" ${{ steps.check-changes.outputs.local_commit }}..${{ steps.check-changes.outputs.upstream_commit }} | tail -1)
+          LAST_COMMIT=$(git log --format="%h %s" ${{ steps.check-changes.outputs.upstream_commit }} -1)
+          
+          # Create PR description file
+          cat > pr_body.md << 'EOFBODY'
+## Automated Upstream Sync
+
+This PR automatically syncs the latest changes from the upstream [nvm-sh/nvm](https://github.com/nvm-sh/nvm) repository into ERIFY(TM) nvm.
+
+### Sync Details
+- **Commits synced:** COMMIT_COUNT_PLACEHOLDER
+- **Upstream commit:** `UPSTREAM_COMMIT_PLACEHOLDER`
+- **Previous commit:** `LOCAL_COMMIT_PLACEHOLDER`
+- **First change:** FIRST_COMMIT_PLACEHOLDER  
+- **Latest change:** LAST_COMMIT_PLACEHOLDER
+
+### What's Included
+This sync includes the latest:
+- Bug fixes and security improvements
+- New features and enhancements  
+- Documentation updates
+- Test improvements
+
+### Review Notes
+- This is an automated sync from the upstream repository
+- All changes come from the trusted nvm-sh/nvm project
+- ERIFY(TM) customizations are preserved in separate commits
+- CI tests will verify compatibility
+
+### Next Steps
+1. Review the changes in the **Files changed** tab
+2. Verify CI tests pass
+3. Merge when ready to deploy upstream improvements
+
+---
+*This PR was automatically created by the ERIFY(TM) upstream sync workflow*  
+*Scheduled weekly on Mondays at 03:00 UTC*
+EOFBODY
+          
+          # Replace placeholders
+          sed -i "s/COMMIT_COUNT_PLACEHOLDER/$COMMIT_COUNT/g" pr_body.md
+          sed -i "s/UPSTREAM_COMMIT_PLACEHOLDER/${{ steps.check-changes.outputs.upstream_commit }}/g" pr_body.md
+          sed -i "s/LOCAL_COMMIT_PLACEHOLDER/${{ steps.check-changes.outputs.local_commit }}/g" pr_body.md
+          sed -i "s/FIRST_COMMIT_PLACEHOLDER/$FIRST_COMMIT/g" pr_body.md
+          sed -i "s/LAST_COMMIT_PLACEHOLDER/$LAST_COMMIT/g" pr_body.md
+          
+          echo "CREATE: Creating Pull Request..."
+          gh pr create \
+            --title "SYNC: Sync upstream nvm-sh/nvm changes ($COMMIT_COUNT commits)" \
+            --body-file pr_body.md \
+            --base "$DEFAULT_BRANCH" \
+            --head "$BRANCH_NAME" \
+            --label "upstream-sync" \
+            --label "automated"
+          
+          echo "SUCCESS: Pull Request created successfully!"
+      
+      - name: Handle merge conflicts
+        if: (steps.check-changes.outputs.changes_available == 'true' || github.event.inputs.force == 'true') && steps.merge.outputs.merge_success == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "WARNING: Merge conflicts detected - creating issue for manual resolution"
+          
+          cat > issue_body.md << 'EOFISSUE'
+## Upstream Sync Conflict
+
+The automated upstream sync from [nvm-sh/nvm](https://github.com/nvm-sh/nvm) encountered merge conflicts that require manual resolution.
+
+### Conflict Details
+- **Upstream commit:** `UPSTREAM_COMMIT_PLACEHOLDER`
+- **Local commit:** `LOCAL_COMMIT_PLACEHOLDER`
+- **Attempted sync:** TIMESTAMP_PLACEHOLDER
+
+### Manual Resolution Required
+
+To resolve this conflict manually:
+
+1. **Fetch the latest changes:**
+   ```bash
+   git fetch upstream
+   git checkout DEFAULT_BRANCH_PLACEHOLDER
+   ```
+
+2. **Create a manual sync branch:**
+   ```bash
+   git checkout -b sync/manual-TIMESTAMP_PLACEHOLDER
+   ```
+
+3. **Attempt the merge:**
+   ```bash
+   git merge upstream/master
+   ```
+
+4. **Resolve conflicts:**
+   - Edit conflicted files to resolve differences
+   - Preserve ERIFY(TM) customizations where needed
+   - Test thoroughly
+
+5. **Complete the sync:**
+   ```bash
+   git add .
+   git commit -m "Manually resolve upstream sync conflicts"
+   git push origin sync/manual-TIMESTAMP_PLACEHOLDER
+   ```
+
+6. **Create a PR** for the manual sync
+
+### Next Steps
+- [ ] Investigate the conflicted files
+- [ ] Resolve conflicts manually
+- [ ] Test the resolution
+- [ ] Create PR with resolved changes
+- [ ] Close this issue when complete
+
+---
+*This issue was automatically created by the ERIFY(TM) upstream sync workflow*
+EOFISSUE
+          
+          # Replace placeholders
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          DEFAULT_BRANCH="${{ steps.default-branch.outputs.default_branch }}"
+          
+          sed -i "s/UPSTREAM_COMMIT_PLACEHOLDER/${{ steps.check-changes.outputs.upstream_commit }}/g" issue_body.md
+          sed -i "s/LOCAL_COMMIT_PLACEHOLDER/${{ steps.check-changes.outputs.local_commit }}/g" issue_body.md
+          sed -i "s/TIMESTAMP_PLACEHOLDER/$TIMESTAMP/g" issue_body.md
+          sed -i "s/DEFAULT_BRANCH_PLACEHOLDER/$DEFAULT_BRANCH/g" issue_body.md
+          
+          gh issue create \
+            --title "ALERT: Manual upstream sync required - merge conflicts detected" \
+            --body-file issue_body.md \
+            --label "upstream-sync" \
+            --label "manual-resolution-required" \
+            --label "conflicts"
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Upstream Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check-changes.outputs.changes_available }}" == "true" ]; then
+            if [ "${{ steps.merge.outputs.merge_success }}" == "true" ]; then
+              echo "SUCCESS: **Success**: Upstream changes synced and PR created" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "WARNING: **Conflicts**: Manual resolution required - issue created" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "INFO: **No Changes**: ERIFY(TM) nvm is up-to-date with upstream" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Default Branch**: ${{ steps.default-branch.outputs.default_branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Upstream Commit**: ${{ steps.check-changes.outputs.upstream_commit }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Local Commit**: ${{ steps.check-changes.outputs.local_commit }}" >> $GITHUB_STEP_SUMMARY

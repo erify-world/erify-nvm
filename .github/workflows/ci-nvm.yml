@@ -1,0 +1,207 @@
+name: 'CI: Node.js Matrix Smoke Test'
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci-nvm:
+    name: 'Node.js ${{ matrix.node-version }} - ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        node-version:
+          - '18'
+          - '20'
+          - '22'
+        exclude:
+          # Reduce matrix size for efficiency
+          - os: macos-latest
+            node-version: '18'
+    
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          disable-sudo: false
+          egress-policy: audit
+          allowed-endpoints: >
+            github.com:443
+            registry.npmjs.org:443
+            raw.githubusercontent.com:443
+            nodejs.org:443
+            iojs.org:443
+            packages.microsoft.com:443
+            azure.archive.ubuntu.com:80
+            security.ubuntu.com:80
+      
+      - name: Checkout ERIFY(TM) nvm
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Install nvm from this fork
+        run: |
+          # Install nvm from the current repository
+          export NVM_DIR="$HOME/.nvm"
+          mkdir -p "$NVM_DIR"
+          
+          # Copy nvm.sh and install.sh from current checkout
+          cp nvm.sh "$NVM_DIR/nvm.sh"
+          cp install.sh "$NVM_DIR/install.sh"
+          cp nvm-exec "$NVM_DIR/nvm-exec"
+          cp bash_completion "$NVM_DIR/bash_completion"
+          
+          # Source nvm
+          echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc
+          echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> ~/.bashrc
+          echo '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> ~/.bashrc
+          
+          # Make nvm-exec executable
+          chmod +x "$NVM_DIR/nvm-exec"
+        shell: bash
+      
+      - name: Verify nvm installation
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          echo "SUCCESS: ERIFY(TM) nvm version:"
+          nvm --version
+          
+          echo "SUCCESS: nvm command available"
+          command -v nvm >/dev/null 2>&1 || { echo "nvm command not found"; exit 1; }
+        shell: bash
+      
+      - name: Install Node.js ${{ matrix.node-version }}
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          echo "INSTALLING: Installing Node.js ${{ matrix.node-version }}..."
+          nvm install ${{ matrix.node-version }}
+          nvm use ${{ matrix.node-version }}
+          
+          echo "SUCCESS: Node.js installed:"
+          node --version
+          
+          echo "SUCCESS: npm installed:"
+          npm --version
+        shell: bash
+      
+      - name: Test nvm commands
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          echo "TEST: Testing nvm commands..."
+          
+          # Test nvm list
+          echo "LIST: Installed versions:"
+          nvm list
+          
+          # Test nvm current
+          echo "CURRENT: Current version:"
+          nvm current
+          
+          # Test nvm which
+          echo "PATH: Node.js path:"
+          nvm which ${{ matrix.node-version }}
+          
+          # Test nvm ls-remote (sample)
+          echo "REMOTE: Available versions (sample):"
+          nvm ls-remote --lts | head -5
+          
+          echo "PASS: All nvm commands working!"
+        shell: bash
+      
+      - name: Test npm functionality
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use ${{ matrix.node-version }}
+          
+          echo "TEST: Testing npm functionality..."
+          
+          # Create a temporary package.json
+          mkdir -p /tmp/nvm-test
+          cd /tmp/nvm-test
+          
+          # Test npm init
+          echo '{"name":"nvm-test","version":"1.0.0","main":"index.js"}' > package.json
+          
+          # Test npm install
+          npm install --save-dev semver
+          
+          # Test require
+          node -e "console.log('SUCCESS: Node.js require works:', require('semver').version)"
+          
+          echo "PASS: npm functionality verified!"
+        shell: bash
+      
+      - name: Test .nvmrc functionality
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          echo "TEST: Testing .nvmrc functionality..."
+          
+          # Create test directory with .nvmrc
+          mkdir -p /tmp/nvmrc-test
+          cd /tmp/nvmrc-test
+          echo "${{ matrix.node-version }}" > .nvmrc
+          
+          # Test nvm install from .nvmrc
+          nvm install
+          nvm use
+          
+          # Verify correct version is used
+          CURRENT_VERSION=$(nvm current)
+          echo "Current version from .nvmrc: $CURRENT_VERSION"
+          
+          # Verify it matches our expected version
+          node --version | grep -E "^v${{ matrix.node-version }}\." || {
+            echo "FAIL: Version mismatch!"
+            exit 1
+          }
+          
+          echo "PASS: .nvmrc functionality verified!"
+        shell: bash
+
+  summary:
+    name: 'CI Summary'
+    runs-on: ubuntu-latest
+    needs: [ci-nvm]
+    if: always()
+    
+    steps:
+      - name: Report Results
+        run: |
+          echo "## RESULTS: ERIFY(TM) nvm CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Node.js Version | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.ci-nvm.result }}" == "success" ]; then
+            echo "| All Versions | PASS: Passed |" >> $GITHUB_STEP_SUMMARY
+            echo "PASS: All Node.js versions tested successfully with ERIFY(TM) nvm!"
+          else
+            echo "| Some Versions | FAIL: Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "FAIL: Some tests failed. Check the individual job logs for details."
+            exit 1
+          fi
