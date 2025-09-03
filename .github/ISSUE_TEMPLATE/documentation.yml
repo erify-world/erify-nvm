@@ -1,0 +1,43 @@
+---
+name: 📚 Documentation Issue  
+about: Report issues with ERIFY™ NVM documentation
+title: '[DOCS] '
+labels: ['category:docs', 'priority:P2']
+assignees: ''
+---
+
+## 📚 Documentation Issue
+<!-- Describe the documentation problem -->
+
+## 📍 Location
+<!-- Where is the issue located? -->
+- [ ] README.md
+- [ ] Installation guide
+- [ ] Usage examples
+- [ ] API documentation
+- [ ] Contributing guide
+- [ ] Other: ___________
+
+## 🔍 Issue Type
+- [ ] Information is incorrect
+- [ ] Information is missing
+- [ ] Information is unclear
+- [ ] Formatting/style issue
+- [ ] Broken links
+- [ ] Outdated information
+
+## ✏️ Suggested Fix
+<!-- What should be changed? -->
+
+## 🎯 Priority Level
+- [ ] P1 - Critical documentation gap
+- [ ] P2 - Important clarification needed
+- [ ] P3 - Minor improvement
+
+## ✅ Pre-submission Checklist
+- [ ] I checked if this is already documented elsewhere
+- [ ] I searched existing issues to avoid duplicates
+- [ ] I can help with the fix if needed
+
+---
+*Help us maintain world-class documentation! 📖*

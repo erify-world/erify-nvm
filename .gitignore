@@ -24,3 +24,5 @@ package-lock.json
 yarn.lock
 
 target/
+# ERIFY™ specific temporary files
+/tmp/

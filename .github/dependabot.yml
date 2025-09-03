@@ -1,0 +1,62 @@
+version: 2
+
+updates:
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "erify-world/maintainers"
+    assignees:
+      - "erify-world/devops"
+    labels:
+      - "category:maintenance"
+      - "priority:P2"
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "erify-world/devops"
+    assignees:
+      - "erify-world/maintainers"
+    labels:
+      - "category:maintenance"
+      - "priority:P2"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(actions):"
+      include: "scope"
+
+  # Docker dependencies (if applicable)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "erify-world/devops"
+    labels:
+      - "category:maintenance"
+      - "priority:P3"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker):"

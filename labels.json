@@ -1,0 +1,82 @@
+[
+  {
+    "name": "category:feature",
+    "color": "0052CC",
+    "description": "New feature or functionality"
+  },
+  {
+    "name": "category:bug",
+    "color": "D73A4A",
+    "description": "Bug fix or error correction"
+  },
+  {
+    "name": "category:docs",
+    "color": "0075CA",
+    "description": "Documentation updates"
+  },
+  {
+    "name": "category:maintenance",
+    "color": "FBCA04",
+    "description": "Maintenance, refactoring, or chores"
+  },
+  {
+    "name": "category:security",
+    "color": "B60205",
+    "description": "Security-related changes"
+  },
+  {
+    "name": "category:performance",
+    "color": "1D76DB",
+    "description": "Performance improvements"
+  },
+  {
+    "name": "priority:P0",
+    "color": "B60205",
+    "description": "Critical - Immediate attention required"
+  },
+  {
+    "name": "priority:P1",
+    "color": "D73A4A",
+    "description": "High - Important, should be addressed soon"
+  },
+  {
+    "name": "priority:P2",
+    "color": "FBCA04",
+    "description": "Medium - Normal priority"
+  },
+  {
+    "name": "priority:P3",
+    "color": "28A745",
+    "description": "Low - Can be addressed when convenient"
+  },
+  {
+    "name": "status:blocked",
+    "color": "6C1BAF",
+    "description": "Blocked by external dependency"
+  },
+  {
+    "name": "status:in-progress",
+    "color": "0E8A16",
+    "description": "Currently being worked on"
+  },
+  {
+    "name": "status:needs-review",
+    "color": "006B75",
+    "description": "Ready for review"
+  },
+  {
+    "name": "erify:enhancement",
+    "color": "5319E7",
+    "description": "ERIFY™ brand enhancement"
+  },
+  {
+    "name": "upstream:sync",
+    "color": "F9D0C4",
+    "description": "Related to upstream synchronization"
+  },
+  {
+    "name": "breaking-change",
+    "color": "D93F0B",
+    "description": "Contains breaking changes"
+  }
+]
