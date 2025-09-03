@@ -40,6 +40,16 @@
   <p>
     <img src="https://img.shields.io/badge/ERIFY™-World--Class-gold?style=for-the-badge&logo=star&logoColor=white" alt="ERIFY™ World-Class" />
   </p>
+  
+  <!-- Quick Links -->
+  <p>
+    <strong>
+      📖 <a href="CONTRIBUTING_ERIFY.md">Contributing Guide</a> | 
+      🏷️ <a href="docs/labels.md">Labels Guide</a> | 
+      🔄 <a href="#-erify-fork-maintenance">Fork Maintenance</a> |
+      🛡️ <a href=".github/CODE_REVIEW_GUIDELINES.md">Code Review</a>
+    </strong>
+  </p>
 </div>
 
 ---
