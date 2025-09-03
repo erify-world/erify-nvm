@@ -1,0 +1,266 @@
+name: Sync Labels
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'labels.json' ]
+  workflow_dispatch:
+  schedule:
+    # Run daily at 6 AM UTC to ensure labels stay in sync
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-labels:
+    name: Synchronize Repository Labels
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Sync labels from labels.json
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read labels from file
+            const labelsFile = path.join(process.cwd(), 'labels.json');
+            const labelsData = JSON.parse(fs.readFileSync(labelsFile, 'utf8'));
+            
+            console.log(`📋 Found ${labelsData.length} labels to sync`);
+            
+            // Get existing labels
+            const existingLabels = await github.rest.issues.listLabelsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const existingLabelNames = existingLabels.data.map(label => label.name);
+            const existingLabelMap = new Map(existingLabels.data.map(label => [label.name, label]));
+            
+            console.log(`🔍 Found ${existingLabelNames.length} existing labels`);
+            
+            // Track changes
+            const created = [];
+            const updated = [];
+            const errors = [];
+            
+            // Process each label from labels.json
+            for (const labelConfig of labelsData) {
+              try {
+                const existingLabel = existingLabelMap.get(labelConfig.name);
+                
+                if (existingLabel) {
+                  // Check if label needs updating
+                  const needsUpdate = 
+                    existingLabel.color !== labelConfig.color ||
+                    existingLabel.description !== labelConfig.description;
+                  
+                  if (needsUpdate) {
+                    await github.rest.issues.updateLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      name: labelConfig.name,
+                      color: labelConfig.color,
+                      description: labelConfig.description
+                    });
+                    
+                    updated.push(labelConfig.name);
+                    console.log(`✏️ Updated label: ${labelConfig.name}`);
+                  }
+                } else {
+                  // Create new label
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: labelConfig.name,
+                    color: labelConfig.color,
+                    description: labelConfig.description
+                  });
+                  
+                  created.push(labelConfig.name);
+                  console.log(`✅ Created label: ${labelConfig.name}`);
+                }
+              } catch (error) {
+                errors.push({ label: labelConfig.name, error: error.message });
+                console.error(`❌ Error processing label ${labelConfig.name}:`, error.message);
+              }
+            }
+            
+            // Find orphaned labels (exist in repo but not in labels.json)
+            const configuredLabelNames = labelsData.map(l => l.name);
+            const orphanedLabels = existingLabelNames.filter(name => 
+              !configuredLabelNames.includes(name) && 
+              !name.startsWith('dependencies') && // Keep dependabot labels
+              !name.startsWith('github-actions') &&
+              name !== 'help wanted' && // Keep common GitHub labels
+              name !== 'good first issue' &&
+              name !== 'invalid' &&
+              name !== 'question' &&
+              name !== 'wontfix' &&
+              name !== 'duplicate'
+            );
+            
+            // Report results
+            console.log('\n📊 Synchronization Summary:');
+            console.log(`✅ Created: ${created.length} labels`);
+            console.log(`✏️ Updated: ${updated.length} labels`);
+            console.log(`❌ Errors: ${errors.length} labels`);
+            console.log(`🔍 Orphaned: ${orphanedLabels.length} labels`);
+            
+            if (created.length > 0) {
+              console.log('\n📝 Created labels:', created.join(', '));
+            }
+            
+            if (updated.length > 0) {
+              console.log('\n📝 Updated labels:', updated.join(', '));
+            }
+            
+            if (errors.length > 0) {
+              console.log('\n❌ Errors:');
+              errors.forEach(e => console.log(`  • ${e.label}: ${e.error}`));
+            }
+            
+            if (orphanedLabels.length > 0) {
+              console.log('\n⚠️ Orphaned labels (not in labels.json):');
+              orphanedLabels.forEach(label => console.log(`  • ${label}`));
+              console.log('\nConsider adding these to labels.json or removing them manually if no longer needed.');
+            }
+            
+            // Create summary comment for manual runs
+            if (context.eventName === 'workflow_dispatch') {
+              const summary = [
+                '🏷️ **ERIFY™ Label Sync Summary**',
+                '',
+                `• ✅ Created: ${created.length} labels`,
+                `• ✏️ Updated: ${updated.length} labels`, 
+                `• ❌ Errors: ${errors.length} labels`,
+                `• 🔍 Orphaned: ${orphanedLabels.length} labels`,
+                '',
+                created.length > 0 ? `**Created:** ${created.join(', ')}` : '',
+                updated.length > 0 ? `**Updated:** ${updated.join(', ')}` : '',
+                orphanedLabels.length > 0 ? `**Orphaned:** ${orphanedLabels.join(', ')}` : '',
+                '',
+                '📖 See [labels documentation](./docs/labels.md) for details.'
+              ].filter(Boolean).join('\n');
+              
+              // Note: Can't easily create issue comments from workflow_dispatch
+              // Users should check the workflow logs for details
+              console.log('\n📋 Summary for manual run:', summary);
+            }
+            
+            // Fail job if there were errors
+            if (errors.length > 0) {
+              core.setFailed(`Label sync completed with ${errors.length} errors`);
+            }
+
+  validate-labels:
+    name: Validate Label Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ✅ Validate labels.json
+        run: |
+          echo "🔍 Validating labels.json format..."
+          
+          # Check if file exists
+          if [ ! -f "labels.json" ]; then
+            echo "❌ labels.json not found"
+            exit 1
+          fi
+          
+          # Validate JSON syntax
+          if ! python3 -m json.tool labels.json >/dev/null 2>&1; then
+            echo "❌ labels.json has invalid JSON syntax"
+            exit 1
+          fi
+          
+          echo "✅ JSON syntax is valid"
+          
+          # Validate required fields
+          python3 << 'EOF'
+          import json
+          import sys
+          
+          with open('labels.json', 'r') as f:
+              labels = json.load(f)
+          
+          required_fields = ['name', 'color', 'description']
+          errors = []
+          
+          for i, label in enumerate(labels):
+              for field in required_fields:
+                  if field not in label:
+                      errors.append(f"Label {i}: missing required field '{field}'")
+                  elif not label[field]:
+                      errors.append(f"Label {i}: empty value for field '{field}'")
+              
+              # Validate color format (hex without #)
+              if 'color' in label:
+                  color = label['color']
+                  if not isinstance(color, str) or len(color) != 6:
+                      errors.append(f"Label '{label.get('name', i)}': color must be 6-character hex (without #)")
+                  elif not all(c in '0123456789ABCDEFabcdef' for c in color):
+                      errors.append(f"Label '{label.get('name', i)}': invalid hex color")
+          
+          # Check for duplicate names
+          names = [label.get('name') for label in labels]
+          duplicates = [name for name in set(names) if names.count(name) > 1]
+          if duplicates:
+              errors.extend([f"Duplicate label name: {name}" for name in duplicates])
+          
+          if errors:
+              print("❌ Validation errors:")
+              for error in errors:
+                  print(f"  • {error}")
+              sys.exit(1)
+          else:
+              print("✅ All labels have valid structure")
+          EOF
+          
+          echo "✅ labels.json validation passed"
+
+      - name: 🔍 Check ERIFY™ Standard Labels
+        run: |
+          echo "🎯 Verifying ERIFY™ standard labels are present..."
+          
+          # Required ERIFY™ labels
+          required_labels=(
+            "category:feature"
+            "category:bug" 
+            "category:docs"
+            "category:maintenance"
+            "category:security"
+            "category:performance"
+            "priority:P0"
+            "priority:P1"
+            "priority:P2"
+            "priority:P3"
+          )
+          
+          missing_labels=()
+          
+          for label in "${required_labels[@]}"; do
+            if ! grep -q "\"name\": \"$label\"" labels.json; then
+              missing_labels+=("$label")
+            fi
+          done
+          
+          if [ ${#missing_labels[@]} -gt 0 ]; then
+            echo "❌ Missing required ERIFY™ labels:"
+            printf "  • %s\n" "${missing_labels[@]}"
+            exit 1
+          fi
+          
+          echo "✅ All required ERIFY™ labels present"

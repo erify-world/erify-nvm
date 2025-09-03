@@ -1,12 +1,69 @@
-<a href="https://github.com/nvm-sh/logos">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvm-sh/logos/HEAD/nvm-logo-white.svg" />
-    <img src="https://raw.githubusercontent.com/nvm-sh/logos/HEAD/nvm-logo-color.svg" height="50" alt="nvm project logo" />
-  </picture>
-</a>
+<div align="center">
+  <a href="https://github.com/erify-world/erify-nvm">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nvm-sh/logos/HEAD/nvm-logo-white.svg" />
+      <img src="https://raw.githubusercontent.com/nvm-sh/logos/HEAD/nvm-logo-color.svg" height="50" alt="ERIFY™ NVM logo" />
+    </picture>
+  </a>
+  
+  <h1>ERIFY™ Node Version Manager</h1>
+  
+  <p><em>World-class Node.js version management with luxury enterprise features</em></p>
+  
+  <!-- ERIFY™ Badges -->
+  <p>
+    <a href="https://github.com/erify-world/erify-nvm/actions/workflows/ci.yml">
+      <img src="https://github.com/erify-world/erify-nvm/actions/workflows/ci.yml/badge.svg" alt="ERIFY™ CI Status" />
+    </a>
+    <a href="https://github.com/erify-world/erify-nvm/actions/workflows/codeql.yml">
+      <img src="https://github.com/erify-world/erify-nvm/actions/workflows/codeql.yml/badge.svg" alt="Security Scan" />
+    </a>
+    <a href="https://github.com/erify-world/erify-nvm/blob/master/LICENSE.md">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" />
+    </a>
+    <a href="https://github.com/erify-world/erify-nvm/releases">
+      <img src="https://img.shields.io/badge/version-v0.40.3--erify-gold.svg" alt="ERIFY™ Version" />
+    </a>
+  </p>
+  
+  <!-- Upstream Sync Status -->
+  <p>
+    <a href="https://github.com/nvm-sh/nvm">
+      <img src="https://img.shields.io/badge/upstream-nvm--sh/nvm-blue?logo=github" alt="Upstream Repository" />
+    </a>
+    <a href="https://github.com/erify-world/erify-nvm/actions/workflows/upstream-sync.yml">
+      <img src="https://img.shields.io/badge/sync-automated-green" alt="Upstream Sync" />
+    </a>
+  </p>
+  
+  <!-- ERIFY™ Brand Badge -->
+  <p>
+    <img src="https://img.shields.io/badge/ERIFY™-World--Class-gold?style=for-the-badge&logo=star&logoColor=white" alt="ERIFY™ World-Class" />
+  </p>
+</div>
 
+---
 
-# Node Version Manager [![Build Status](https://app.travis-ci.com/nvm-sh/nvm.svg?branch=master)][3] [![nvm version](https://img.shields.io/badge/version-v0.40.3-yellow.svg)][4] [![CII Best Practices](https://bestpractices.dev/projects/684/badge)](https://bestpractices.dev/projects/684)
+## 🌟 ERIFY™ Enhanced Features
+
+This is **ERIFY™ NVM** - an enhanced fork of the popular [nvm-sh/nvm](https://github.com/nvm-sh/nvm) project, providing world-class Node.js version management with enterprise-grade features:
+
+### ✨ **Premium Enhancements**
+- 🏷️ **Advanced Labeling System** - Standardized project management with automated workflows
+- 🔄 **Automated Upstream Sync** - Stay current with upstream while preserving customizations  
+- 🛡️ **Enhanced Security** - CodeQL analysis, dependency scanning, and security-focused workflows
+- 🤖 **Intelligent CI/CD** - Multi-Node.js version testing (18, 20, 22) with quality gates
+- 📝 **Professional Templates** - PR/issue templates and code review guidelines for team excellence
+- 🏆 **ERIFY™ Quality Standards** - World-class development practices and contribution guidelines
+
+### 🔄 **Upstream Compatibility**
+This fork maintains **100% compatibility** with upstream nvm-sh/nvm while adding luxury enterprise features. All standard NVM functionality works identically to the original project.
+
+---
+
+# Node Version Manager
+
+[![Build Status](https://app.travis-ci.com/nvm-sh/nvm.svg?branch=master)][3] [![nvm version](https://img.shields.io/badge/version-v0.40.3-yellow.svg)][4] [![CII Best Practices](https://bestpractices.dev/projects/684/badge)](https://bestpractices.dev/projects/684)
 
 <!-- To update this table of contents, ensure you have run `npm install` then `npm run doctoc` -->
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -96,13 +153,99 @@ Simple as that!
 ## About
 nvm is a version manager for [node.js](https://nodejs.org/en/), designed to be installed per-user, and invoked per-shell. `nvm` works on any POSIX-compliant shell (sh, dash, ksh, zsh, bash), in particular on these platforms: unix, macOS, and [windows WSL](https://github.com/nvm-sh/nvm#important-notes).
 
+## 🔄 ERIFY™ Fork Maintenance
+
+This repository is an enhanced fork of [nvm-sh/nvm](https://github.com/nvm-sh/nvm) that adds enterprise-grade features while maintaining full compatibility with the upstream project.
+
+### 🔄 Upstream Synchronization
+
+**ERIFY™ NVM** automatically stays synchronized with the upstream repository through our [automated sync workflow](.github/workflows/upstream-sync.yml):
+
+- **🕐 Daily Sync Checks**: Automatically detects new upstream changes
+- **🤖 Automated Merging**: Preserves ERIFY™ customizations during upstream merges  
+- **🛡️ Conflict Resolution**: Intelligent handling of merge conflicts with manual fallback
+- **📋 PR Creation**: Creates pull requests for review when changes are detected
+- **✅ Testing**: Validates merged changes to ensure compatibility
+
+### 🎯 What Stays ERIFY™
+
+These files maintain ERIFY™ enhancements and are preserved during upstream syncs:
+
+- **`.github/`** - All ERIFY™ workflows, templates, and GitHub configurations
+- **`labels.json`** - Standardized labeling system  
+- **`docs/labels.md`** - Label documentation
+- **`.gitmessage.txt`** - Commit message template
+- **README.md sections** - ERIFY™ branding and enhanced documentation
+
+### 🔧 Manual Sync (Advanced Users)
+
+If you need to manually sync with upstream:
+
+```bash
+# Add upstream remote (one-time setup)
+git remote add upstream https://github.com/nvm-sh/nvm.git
+
+# Fetch latest upstream changes
+git fetch upstream master
+
+# Create sync branch
+git checkout -b sync-upstream-$(date +%Y%m%d)
+
+# Merge upstream (resolve conflicts if needed)
+git merge upstream/master
+
+# Verify ERIFY™ files are preserved
+ls .github/workflows/ | grep -E "(ci|labels|pr-label)" # Should show ERIFY™ workflows
+
+# Test the changes
+npm run test/fast
+
+# Create PR for review
+git push origin sync-upstream-$(date +%Y%m%d)
+```
+
+### 🚨 Conflict Resolution
+
+When upstream changes conflict with ERIFY™ customizations:
+
+1. **Automated Resolution**: Most conflicts in ERIFY™-specific files are auto-resolved
+2. **Manual Review**: Complex conflicts create GitHub issues for team review
+3. **Preserve Customizations**: Always prioritize ERIFY™ enhancements over upstream when appropriate
+4. **Test Thoroughly**: Verify functionality after any manual conflict resolution
+
+### 📞 Support
+
+For questions about fork maintenance or sync issues:
+- 🎫 [Create an issue](https://github.com/erify-world/erify-nvm/issues/new/choose)
+- 💬 [Start a discussion](https://github.com/erify-world/erify-nvm/discussions)
+- 📧 Contact: [devops@erify.world](mailto:devops@erify.world)
+
 <a id="installation-and-update"></a>
 <a id="install-script"></a>
 ## Installing and Updating
 
-### Install & Update Script
+### 🌟 ERIFY™ Installation (Recommended)
 
-To **install** or **update** nvm, you should run the [install script][2]. To do that, you may either download and run the script manually, or use the following cURL or Wget command:
+For the enhanced ERIFY™ version with premium features, install from this repository:
+
+```sh
+curl -o- https://raw.githubusercontent.com/erify-world/erify-nvm/master/install.sh | bash
+```
+```sh
+wget -qO- https://raw.githubusercontent.com/erify-world/erify-nvm/master/install.sh | bash
+```
+
+**ERIFY™ Benefits:**
+- ✅ All standard NVM functionality (100% compatible)
+- 🚀 Enhanced CI/CD workflows and quality gates
+- 🏷️ Professional project management tools
+- 🔄 Automated upstream synchronization
+- 🛡️ Advanced security scanning and best practices
+- 📝 World-class contribution templates and guidelines
+
+### Install & Update Script (Upstream)
+
+To install the **original upstream version**, you can use:
 ```sh
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 ```

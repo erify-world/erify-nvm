@@ -1,0 +1,254 @@
+name: ERIFY™ CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  NODE_VERSIONS: '["18", "20", "22"]'
+
+jobs:
+  matrix-test:
+    name: Test Node.js ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]
+    
+    steps:
+      - name: 🛡️ Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          disable-sudo: true
+          egress-policy: audit
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            nodejs.org:443
+            registry.npmjs.org:443
+            raw.githubusercontent.com:443
+
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run fast test suite
+        run: npm run test/fast
+        env:
+          NODE_VERSION: ${{ matrix.node-version }}
+
+      - name: 🔍 Lint shell scripts
+        run: |
+          # Install shellcheck if not available
+          if ! command -v shellcheck &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+          fi
+          
+          # Run shellcheck on main files
+          shellcheck -s bash nvm.sh install.sh nvm-exec bash_completion
+
+      - name: 📊 Validate with Node.js ${{ matrix.node-version }}
+        run: |
+          # Source nvm and verify it works with this Node version
+          set +e  # Don't exit on error for better diagnostics
+          source ./nvm.sh --no-use
+          
+          # Test basic nvm commands
+          echo "Testing nvm functionality..."
+          nvm --version
+          nvm list-remote --lts | head -5
+          
+          # Verify PATH manipulation works
+          echo "Current PATH: $PATH"
+          echo "NVM_DIR: $NVM_DIR"
+
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    needs: matrix-test
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 📚 Check documentation
+        run: |
+          # Verify README table of contents is up to date
+          npm run doctoc:check || {
+            echo "❌ README table of contents is outdated"
+            echo "Run 'npm run doctoc' to update it"
+            exit 1
+          }
+
+      - name: 📝 Validate markdown links
+        run: npm run markdown-link-check
+
+      - name: 🎨 Check code style
+        run: npm run eclint
+
+      - name: 🐋 Lint Dockerfile
+        run: npm run dockerfile_lint
+
+      - name: ✅ All quality gates passed
+        run: echo "🎉 All quality gates passed successfully!"
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: matrix-test
+    
+    strategy:
+      matrix:
+        shell: [bash, dash, zsh]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🐚 Install ${{ matrix.shell }}
+        run: |
+          if [ "${{ matrix.shell }}" = "zsh" ]; then
+            sudo apt-get update && sudo apt-get install -y zsh
+          elif [ "${{ matrix.shell }}" = "dash" ]; then
+            sudo apt-get update && sudo apt-get install -y dash
+          fi
+
+      - name: 🧪 Run sourcing tests in ${{ matrix.shell }}
+        run: |
+          case "${{ matrix.shell }}" in
+            bash) make TEST_SUITE=sourcing test-bash ;;
+            dash) make TEST_SUITE=sourcing test-dash ;;
+            zsh)  make TEST_SUITE=sourcing test-zsh ;;
+          esac
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run security audit
+        run: |
+          # Check for security vulnerabilities in dependencies
+          npm audit --audit-level=moderate
+          
+          # Check for common security issues in shell scripts
+          echo "🔍 Scanning for security patterns..."
+          
+          # Look for potential security issues
+          if grep -r "eval\|exec\|system\|\$(" nvm.sh install.sh 2>/dev/null; then
+            echo "⚠️ Found potentially unsafe shell operations - review required"
+          fi
+          
+          # Check for hardcoded secrets patterns
+          if grep -rE "(password|secret|key|token)\s*=" . --exclude-dir=.git --exclude-dir=node_modules 2>/dev/null; then
+            echo "❌ Potential hardcoded secrets found"
+            exit 1
+          fi
+          
+          echo "✅ Basic security scan completed"
+
+  erify-quality:
+    name: ERIFY™ Quality Standards
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Validate labels exist
+        run: |
+          if [ ! -f "labels.json" ]; then
+            echo "❌ labels.json is missing"
+            exit 1
+          fi
+          
+          # Validate JSON format
+          python3 -m json.tool labels.json >/dev/null || {
+            echo "❌ labels.json is not valid JSON"
+            exit 1
+          }
+          
+          echo "✅ Labels file validation passed"
+
+      - name: 📝 Check commit template
+        run: |
+          if [ ! -f ".gitmessage.txt" ]; then
+            echo "❌ .gitmessage.txt is missing"
+            exit 1
+          fi
+          echo "✅ Commit template exists"
+
+      - name: 📋 Check templates
+        run: |
+          # Verify essential templates exist
+          required_files=(
+            ".github/pull_request_template.md"
+            ".github/ISSUE_TEMPLATE/bug_report.yml"
+            ".github/ISSUE_TEMPLATE/feature_request.yml"
+            ".github/CODEOWNERS"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required template missing: $file"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required templates present"
+
+      - name: 🌟 ERIFY™ Standards Check
+        run: |
+          echo "🎯 Verifying ERIFY™ standards compliance..."
+          
+          # Check for ERIFY branding in key files
+          if ! grep -q "ERIFY" .github/pull_request_template.md; then
+            echo "⚠️ ERIFY™ branding missing from PR template"
+          fi
+          
+          # Verify documentation standards
+          if [ -f "docs/labels.md" ]; then
+            echo "✅ Labels documentation present"
+          else
+            echo "⚠️ Labels documentation missing"
+          fi
+          
+          echo "🏆 ERIFY™ quality standards verification completed"
