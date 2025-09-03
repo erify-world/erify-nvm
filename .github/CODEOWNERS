@@ -1,0 +1,21 @@
+# ERIFY™ Code Owners
+# These users will be automatically requested for review
+
+# Default reviewers for all files
+* @erify-world/maintainers
+
+# GitHub workflows and configuration
+/.github/ @erify-world/devops
+
+# Security and sensitive files  
+/labels.json @erify-world/devops
+/.gitmessage.txt @erify-world/devops
+/docs/labels.md @erify-world/devops
+
+# Core NVM functionality (requires extra scrutiny for upstream compat)
+/nvm.sh @erify-world/maintainers @erify-world/senior-devs
+/install.sh @erify-world/maintainers @erify-world/senior-devs
+
+# Documentation
+/README.md @erify-world/documentation
+/docs/ @erify-world/documentation

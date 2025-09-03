@@ -1,0 +1,61 @@
+---
+name: 🔒 Security Issue
+about: Report a security vulnerability (private disclosure recommended)
+title: '[SECURITY] '
+labels: ['category:security', 'priority:P0']
+assignees: ''
+---
+
+## ⚠️ Security Notice
+**For critical security vulnerabilities, please use private disclosure:**
+- Email: security@erify.world
+- GitHub Security Advisory: [Create Private Report](../../security/advisories/new)
+
+## 🔒 Security Issue Description
+<!-- Provide a clear description of the security concern -->
+
+## 🎯 Affected Components
+<!-- Which parts of ERIFY™ NVM are affected? -->
+- [ ] Installation scripts
+- [ ] Core NVM functionality  
+- [ ] ERIFY™ specific features
+- [ ] Dependencies
+- [ ] CI/CD workflows
+
+## 📊 Impact Assessment
+- [ ] **Critical** - Remote code execution, data theft
+- [ ] **High** - Privilege escalation, significant data exposure
+- [ ] **Medium** - Information disclosure, DoS
+- [ ] **Low** - Minor information leak
+
+## 🔍 Reproduction Steps
+<!-- If safe to disclose, provide minimal reproduction steps -->
+1. 
+2. 
+3. 
+
+## 🛡️ Proposed Mitigation
+<!-- Any suggestions for fixing this issue? -->
+
+## 🌍 Environment Details
+- Operating System:
+- ERIFY™ NVM Version:
+- Installation Method:
+
+## 📋 Additional Context
+<!-- Any other relevant information -->
+
+## ⚡ Urgency Level
+- [ ] Immediate - Active exploitation possible
+- [ ] High - Should be patched within days
+- [ ] Medium - Should be patched within weeks
+- [ ] Low - Can be included in next release
+
+## ✅ Security Checklist
+- [ ] I understand this issue will be handled with appropriate confidentiality
+- [ ] I have not disclosed this publicly elsewhere
+- [ ] I can provide additional details if needed
+- [ ] I am available for coordinated disclosure process
+
+---
+*Security is paramount in ERIFY™ operations. Thank you for responsible disclosure! 🛡️*

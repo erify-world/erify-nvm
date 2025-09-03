@@ -1,0 +1,76 @@
+---
+name: 🐛 Bug Report
+about: Report a bug or issue with ERIFY™ NVM
+title: '[BUG] '
+labels: ['category:bug', 'priority:P2']
+assignees: ''
+---
+
+## 🐛 Bug Description
+<!-- Provide a clear and concise description of the bug -->
+
+## 🔄 Steps to Reproduce
+1. 
+2. 
+3. 
+
+## ✅ Expected Behavior
+<!-- What should have happened? -->
+
+## ❌ Actual Behavior
+<!-- What actually happened? -->
+
+## 🖥️ Environment Information
+
+#### Operating System and Version:
+
+#### `nvm debug` output:
+<details>
+<summary>Click to expand</summary>
+
+```sh
+
+```
+</details>
+
+#### `nvm ls` output:
+<details>
+<summary>Click to expand</summary>
+
+```sh
+
+```
+</details>
+
+#### How did you install ERIFY™ NVM?
+<!-- (e.g. install script, Homebrew, manual installation) -->
+
+## 🌐 Network Diagnostics
+<!-- If installation issues, include this section -->
+#### `curl -I --compressed -v https://nodejs.org/dist/` output:
+<details>
+<summary>Click to expand (if applicable)</summary>
+
+```sh
+
+```
+</details>
+
+## 🔍 Additional Context
+<!-- Any other context, screenshots, or information -->
+
+## 🏷️ Priority Assessment
+<!-- Help us triage by selecting priority -->
+- [ ] P0 - Critical (system broken, security issue)
+- [ ] P1 - High (major functionality affected)
+- [ ] P2 - Medium (minor functionality affected)
+- [ ] P3 - Low (cosmetic or enhancement)
+
+## ✅ Pre-submission Checklist
+- [ ] I searched existing issues to avoid duplicates
+- [ ] I provided all requested environment information
+- [ ] I can reproduce this issue consistently
+- [ ] This is an ERIFY™ NVM specific issue (not upstream NVM)
+
+---
+*Thank you for helping improve ERIFY™ NVM! 🚀*

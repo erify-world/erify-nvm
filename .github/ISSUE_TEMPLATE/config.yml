@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: 🆘 ERIFY™ Support
+    url: https://github.com/erify-world/erify-nvm/discussions
+    about: Get help with ERIFY™ NVM usage and configuration
+  - name: 📈 Upstream NVM Issues
+    url: https://github.com/nvm-sh/nvm/issues
+    about: Report issues with core NVM functionality to upstream project

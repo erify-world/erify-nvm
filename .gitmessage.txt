@@ -1,0 +1,25 @@
+# [Category] Brief description (50 chars or less)
+#
+# Detailed explanation of the change (wrap at 72 chars)
+# - What was changed and why
+# - Reference any related issues or PRs
+#
+# Categories:
+# feat:     New feature
+# fix:      Bug fix
+# docs:     Documentation changes
+# style:    Code style changes (formatting, etc.)
+# refactor: Code refactoring without functional changes
+# test:     Adding or modifying tests
+# chore:    Maintenance tasks, dependency updates
+# security: Security-related changes
+# perf:     Performance improvements
+#
+# Example:
+# feat: Add upstream sync workflow for nvm-sh/nvm
+#
+# - Implement automated sync from upstream nvm repository
+# - Preserve ERIFY™ customizations during merge process
+# - Schedule daily sync checks to stay current
+#
+# Closes #123
